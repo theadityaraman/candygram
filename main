@@ -1,0 +1,83 @@
+import openai
+import win32print
+import win32ui
+import win32con
+
+names_list = [
+    'Hannah Adair', 'Nathaniel Adelola', 'Aadi Aggarwal', 'Heavin An', 'Sebastian Arellano-Rubach',
+    'Rayan Atique', 'Zacharie Barikage', 'Sahil Bhatia', 'Ida Biggar', 'Abigail Blumberger', 
+    'Janine Burtnick', 'Soham Chakraborty', 'Zaira Chaudhry', 'Casey Chen', 'Jialu Marie Chen', 
+    'Christian Chung', 'Michelle Cowling', 'Lucas Craiu', 'Jiahui Cui', 'Siena Dalla Nora', 
+    'Isabella Deng', 'Anousha Dhalla', 'Sacha Doucet-Kim', 'Jack Duchesne', 'Catherine Fan', 
+    'Emily Fan', 'Kelvin Fan', 'Mitsuko Fernandes', 'Argane Goel', 'Tilly Gossling', 'Matthew Gu', 
+    'Nicholas Guo', 'Justine Hastings', 'Zachary Hixon', 'Sterling Huang', 'Ethan Jeon', 
+    'Ioanna Kontogiannis', 'Iris Lee', 'Ethan Li', 'William Li', 'Zoe Li', 'Lawrence Lin', 
+    'Olivia Lin', 'Ethan Liu', 'Jason Liu', 'Jason Liu', 'Larry Liu', 'Michelle Liu', 
+    'Ekaterina Lyakisheva', 'Dexter MacCall', 'Isabella Manuel', 'Spencer Mason', 'Adam Mawani', 
+    'Diya Mehta', 'Grace Ming', 'Ryleigh Mo', 'Nicholas Moreau', 'Ellie Murray', 'Jack Palmer', 
+    'Emily Pang', 'Leo Pang', 'Ziqing Pang', 'Iris Park', 'Galen Petersmeyer', 'Maria Petrut', 
+    'Daria Picu', 'Xyn Pilkiw', 'Chris Prodan', 'Valerie Qi', 'Hilaire Qian', 'Jack Qiu', 
+    'Shylah Reddock', 'Emily Rong', 'Upayan Roy', 'Aisha Sayed', 'Liam Seguin', 'Maya Sengar', 
+    'Koby Sernick', 'Avi Shah', 'Archie Shou', 'Georgio Silvea', 'Aayaan Jain Singal', 
+    'Zoe Sleizer-Griesz', 'Caroline Song', 'James Song', 'Dylan Steinman', 'Cici Sutherland', 
+    'Emma Tang', 'Tyen Tesfaye', 'Mitchell Tong', 'Brianna Tota', 'Serafym Tsapko', 'Jacob Tsui', 
+    'Basil Ulicki', 'Luyu Van Kerkwijk', 'Jennifer Wang', 'Yi Nan Wang', 'Jarmin Weng', 
+    'Alexander Wong', 'Sophie Wong', 'Klara Worden', 'Kathleen Wu', 'Raymond Wu', 'Shinena Xiang', 
+    'Andrew Xing', 'Alice Xu', 'Ethan Xu', 'Lucas Xu', 'Michael Xu', 'Emma Xue', 'Chelsey Yang', 
+    'David Yang', 'Jenny Yang', 'Nathan Yang', 'Lucas Yeung', 'Tony Yuan', 'Selina Zhai', 
+    'Bonnie Zhang', 'Yining Zhang', 'Anna Zhou', 'Terry Zhu', 'Leo Zhuang'
+]
+
+def generate_candy_gram(prompt, api_key):
+    openai.api_key = api_key
+
+    try:
+        response = openai.Completion.create(
+            engine="text-davinci-003",  # You can choose a different model if you prefer
+            prompt=prompt,
+            max_tokens=50  # Adjust the number of tokens as needed
+        )
+        return response.choices[0].text.strip()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+    
+def print_to_printer(messages, paper_size, candy_gram_sizes):
+    printer_name = win32print.GetDefaultPrinter()
+    hprinter = win32print.OpenPrinter(printer_name)
+    try:
+        # Set up the printer job
+        hjob = win32print.StartDocPrinter(hprinter, 1, ("Candy Gram Print", None, "RAW"))
+        win32print.StartPagePrinter(hprinter)
+
+        # Create a DC and start the document
+        hDC = win32ui.CreateDC()
+        hDC.CreatePrinterDC(printer_name)
+        hDC.StartDoc("Candy Gram Print")
+        hDC.StartPage()
+
+        # Set the full paper size (43x28 cm)
+        hDC.SetMapMode(win32con.MM_ANISOTROPIC)
+        hDC.SetWindowExt((4300, 2800))  # Set in MM_TWIPS
+
+        # Print each message
+        for i, message in enumerate(messages):
+            # Calculate position based on index and candy gram size
+            x_position = (i % 2) * candy_gram_sizes[i][0] * 100  # Multiply by 100 to convert to MM_TWIPS
+            y_position = (i // 2) * candy_gram_sizes[i][1] * 100
+
+            hDC.TextOut(x_position, y_position, message)
+
+        # End the print job
+        hDC.EndPage()
+        hDC.EndDoc()
+        hDC.DeleteDC()
+    finally:
+        win32print.ClosePrinter(hprinter)
+
+# ... (rest of your existing script) ...
+
+# Example usage
+candy_gram_messages = [generate_candy_gram(prompt, api_key) for prompt in prompts]
+candy_gram_sizes = [('2150', '1400'), ('1400', '2150')]  # List of sizes in MM_TWIPS
+print_to_printer(candy_gram_messages, '43x28', candy_gram_sizes)
